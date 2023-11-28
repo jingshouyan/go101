@@ -2,7 +2,7 @@ package router
 
 import (
 	"go101/config"
-	"go101/logger"
+	"go101/middleware"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -16,7 +16,7 @@ func Serve() {
 
 	gin.SetMode(cfg.Mode)
 	r := gin.New()
-	r.Use(logger.GinLogger(), logger.GinRecovery(true))
+	r.Use(middleware.GinLogger(), middleware.GinRecovery(true))
 	addRouter(r)
 
 	s := &http.Server{
