@@ -1,8 +1,7 @@
 package config
 
 import (
-	"encoding/json"
-	"fmt"
+	"time"
 
 	"github.com/spf13/viper"
 )
@@ -22,8 +21,11 @@ type LoggerConfig struct {
 }
 
 type ServerConfig struct {
-	Mode string `json:"mode"`
-	Addr string `json:"addr"`
+	Mode           string        `json:"mode"`
+	Addr           string        `json:"addr"`
+	ReadTimeout    time.Duration `json:"read_timeout"`
+	WriteTimeout   time.Duration `json:"write_timeout"`
+	MaxHeaderBytes int           `json:"max_header_bytes"`
 }
 
 var Conf Config
@@ -35,7 +37,7 @@ func init() {
 	if err := viper.ReadInConfig(); err != nil {
 		panic(err)
 	}
-	viper.Unmarshal(&Conf)
-	c, _ := json.Marshal(Conf)
-	fmt.Println(string(c))
+	if err := viper.Unmarshal(&Conf); err != nil {
+		panic(err)
+	}
 }

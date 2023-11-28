@@ -1,6 +1,9 @@
 [server]
-mode = "release"
+mode = "debug"
 addr = "127.0.0.1:8080"
+readTimeout = "60s"
+writeTimeout = "60s"
+maxHeaderBytes = 102400
 [logger]
 filename = "./logs/go101.log"
 maxSize = 100
