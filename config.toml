@@ -1,0 +1,10 @@
+[server]
+mode = "release"
+addr = "127.0.0.1:8080"
+[logger]
+filename = "./logs/go101.log"
+maxSize = 100
+maxAge = 7
+maxBackups = 10
+compress = true
+level = "debug"
