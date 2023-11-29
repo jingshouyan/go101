@@ -7,6 +7,9 @@ require (
 	github.com/spf13/viper v1.17.0
 	go.uber.org/zap v1.26.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1
+	gorm.io/driver/sqlite v1.5.4
+	gorm.io/gorm v1.25.5
+	moul.io/zapgorm2 v1.3.0
 )
 
 require (
@@ -52,7 +55,4 @@ require (
 	google.golang.org/protobuf v1.31.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
-	gorm.io/driver/sqlite v1.5.4 // indirect
-	gorm.io/gorm v1.25.5 // indirect
-	moul.io/zapgorm2 v1.3.0 // indirect
 )
