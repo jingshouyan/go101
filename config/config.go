@@ -9,6 +9,7 @@ import (
 type Config struct {
 	Server ServerConfig `json:"server"`
 	Logger LoggerConfig `json:"logger"`
+	DB     DBConfig     `json:"db"`
 }
 
 type LoggerConfig struct {
@@ -26,6 +27,16 @@ type ServerConfig struct {
 	ReadTimeout    time.Duration `json:"read_timeout"`
 	WriteTimeout   time.Duration `json:"write_timeout"`
 	MaxHeaderBytes int           `json:"max_header_bytes"`
+}
+
+type DBConfig struct {
+	Driver      string `json:"driver"`
+	Host        string `json:"host"`
+	Port        int    `json:"port"`
+	User        string `json:"user"`
+	Password    string `json:"password"`
+	Name        string `json:"name"`
+	TablePrefix string `json:"table_prefix"`
 }
 
 var Conf Config

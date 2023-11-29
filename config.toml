@@ -11,3 +11,10 @@ maxAge = 7
 maxBackups = 10
 compress = true
 level = "debug"
+[db]
+driver = "sqlite"
+host = "127.0.0.1"
+port = 3306
+user = "root"
+password = "Abc@123"
+name = "go101.sqlite"
