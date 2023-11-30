@@ -1,7 +1,9 @@
 package model
 
 import (
+	"fmt"
 	"go101/config"
+	"go101/util"
 	"time"
 
 	"go.uber.org/zap"
@@ -42,6 +44,7 @@ func init() {
 	}
 	migrate()
 	initRole()
+	initAdmin()
 }
 
 func migrate() {
@@ -59,5 +62,23 @@ func initRole() {
 			All:      true,
 		}
 		AddRole(&r)
+	}
+}
+
+func initAdmin() {
+	r, err := GetAdminById(1)
+	if err == gorm.ErrRecordNotFound {
+		usename := "admin"
+		pwd, _ := util.GenerateRandomPassword(12)
+		pwdHash, _ := util.HashPassword(pwd)
+		r = Admin{
+			Model:    Model{ID: 1},
+			Username: usename,
+			PwdHash:  pwdHash,
+			RoleID:   1,
+		}
+		AddAdmin(&r)
+		fmt.Printf("init admin{username:%s,password:%s},you shoud change it\n", usename, pwd)
+		log.Info("init admin", zap.String("username", usename), zap.String("password", pwd))
 	}
 }

@@ -18,7 +18,7 @@ type Admin struct {
 	Phone      string `json:"phone" gorm:"unique"`
 	Email      string `json:"email" gorm:"unique"`
 	Username   string `json:"username" gorm:"unique"`
-	Password   string `json:"-"`
+	PwdHash    string `json:"-"`
 	Nickname   string `json:"nickname"`
 	Avatar     string `json:"avatar"`
 	RoleID     uint   `json:"roleId"`
