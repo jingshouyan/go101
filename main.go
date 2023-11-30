@@ -3,9 +3,9 @@ package main
 import (
 	_ "go101/logger"
 	_ "go101/model"
-	"go101/router"
+	"go101/serve"
 )
 
 func main() {
-	router.Serve()
+	serve.Serve()
 }

@@ -1,6 +1,7 @@
-package router
+package serve
 
 import (
+	bossrouter "go101/boss/router"
 	"go101/config"
 	"go101/middleware"
 	"net/http"
@@ -17,6 +18,7 @@ func Serve() {
 	gin.SetMode(cfg.Mode)
 	r := gin.New()
 	r.Use(middleware.GinLogger(), middleware.GinRecovery(true))
+
 	addRouter(r)
 
 	s := &http.Server{
@@ -32,6 +34,10 @@ func Serve() {
 }
 
 func addRouter(r *gin.Engine) {
+
+	bossGroup := r.Group("/boss")
+	bossrouter.InitRoute(bossGroup)
+
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{
 			"message": "pong",

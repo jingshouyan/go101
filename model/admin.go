@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	AccountTypePhone uint = iota + 1
+	AccountTypePhone int = iota + 1
 	AccountTypeEmail
 	AccountTypeUsername
 )
@@ -24,6 +24,18 @@ type Admin struct {
 	RoleID     uint   `json:"roleId"`
 	Role       Role   `json:"role"`
 	DisabledAt int64  `json:"disabledAt"`
+}
+
+func (a *Admin) HasPermission(requiredPermission string) bool {
+	if a.Role.All {
+		return true
+	}
+	for _, code := range a.Role.Codes {
+		if code == requiredPermission {
+			return true
+		}
+	}
+	return false
 }
 
 func AddAdmin(a *Admin) error {
@@ -54,7 +66,7 @@ func CountAdmins(maps interface{}) (count int64, err error) {
 	return
 }
 
-func GetAdminByAccount(t uint, account string) (a Admin, err error) {
+func GetAdminByAccount(t int, account string) (a Admin, err error) {
 	c := new(Admin)
 	switch t {
 	case AccountTypePhone:
@@ -66,6 +78,6 @@ func GetAdminByAccount(t uint, account string) (a Admin, err error) {
 	default:
 		return a, errors.New("invalid account type")
 	}
-	err = db.Where(c).First(&a).Error
+	err = db.Preload(clause.Associations).Where(c).First(&a).Error
 	return
 }

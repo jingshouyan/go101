@@ -1,6 +1,8 @@
 package middleware
 
 import (
+	"bytes"
+	"io"
 	"net"
 	"net/http"
 	"net/http/httputil"
@@ -15,12 +17,31 @@ import (
 
 var log = zap.L()
 
+type bodyLogWriter struct {
+	gin.ResponseWriter
+	body *bytes.Buffer
+}
+
+func (w bodyLogWriter) Write(b []byte) (int, error) {
+	w.body.Write(b)
+	return w.ResponseWriter.Write(b)
+}
+
 func GinLogger() gin.HandlerFunc {
 	return func(c *gin.Context) {
+		req, _ := io.ReadAll(c.Request.Body)
+		c.Request.Body = io.NopCloser(bytes.NewBuffer(req))
 		start := time.Now()
 		path := c.Request.URL.Path
 		query := c.Request.URL.RawQuery
+
+		blw := &bodyLogWriter{body: bytes.NewBufferString(""), ResponseWriter: c.Writer}
+		c.Writer = blw
+
 		c.Next()
+
+		rsp := blw.body.Bytes()
+
 		cost := time.Since(start)
 		log.Info(path,
 			zap.Int("status", c.Writer.Status()),
@@ -30,6 +51,8 @@ func GinLogger() gin.HandlerFunc {
 			zap.String("ip", c.ClientIP()),
 			zap.String("user-agent", c.Request.UserAgent()),
 			zap.String("errors", c.Errors.ByType(gin.ErrorTypePrivate).String()),
+			zap.Binary("req", req),
+			zap.Binary("rsp", rsp),
 			zap.Duration("cost", cost))
 	}
 }
