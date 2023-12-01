@@ -23,9 +23,9 @@ func init() {
 	var err error
 	glog := zapgorm2.Logger{
 		ZapLogger:                 log,
-		LogLevel:                  logger.Warn,
+		LogLevel:                  logger.Info,
 		SlowThreshold:             100 * time.Millisecond,
-		SkipCallerLookup:          true,
+		SkipCallerLookup:          false,
 		IgnoreRecordNotFoundError: true,
 		Context:                   nil,
 	}

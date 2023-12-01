@@ -52,7 +52,7 @@ func DeleteAdmin(id uint) error {
 }
 
 func GetAdminById(id uint) (a Admin, err error) {
-	err = db.Preload(clause.Associations).First(&a, id).Error
+	err = db.First(&a, id).Error
 	return
 }
 

@@ -47,6 +47,68 @@ func logout(c *gin.Context) {
 	response.OK(c, nil)
 }
 
+type changePwdReq struct {
+	OldPwd string `json:"oldPwd" binding:"required"`
+	NewPwd string `json:"newPwd" binding:"required"`
+}
+
+func changePwd(c *gin.Context) {
+	var req changePwdReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.CommonError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	uid := sessions.Default(c).Get("uid").(uint)
+	admin, err := model.GetAdminById(uid)
+	if err != nil {
+		response.CommonError(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	check := util.CheckPasswordHash(req.OldPwd, admin.PwdHash)
+	if !check {
+		response.BizError(c, response.PasswordWrong, nil)
+		return
+	}
+	hash, err := util.HashPassword(req.NewPwd)
+	if err != nil {
+		response.CommonError(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	a := &model.Admin{
+		Model:   model.Model{ID: admin.ID},
+		PwdHash: hash,
+	}
+	model.UpdateAdmin(a)
+	response.OK(c, nil)
+
+}
+
+type updateProfileReq struct {
+	Nickname string `json:"nickname"`
+	Avatar   string `json:"avatar"`
+}
+
+func updateProfile(c *gin.Context) {
+	var req updateProfileReq
+	if err := c.ShouldBindJSON(&req); err != nil {
+		response.CommonError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	uid := sessions.Default(c).Get("uid").(uint)
+	admin, err := model.GetAdminById(uid)
+	if err != nil {
+		response.CommonError(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	a := &model.Admin{
+		Model:    model.Model{ID: admin.ID},
+		Nickname: req.Nickname,
+		Avatar:   req.Avatar,
+	}
+	model.UpdateAdmin(a)
+	response.OK(c, nil)
+}
+
 func ping(c *gin.Context) {
 	response.OK(c, "pong")
 }

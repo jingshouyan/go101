@@ -2,19 +2,21 @@ package middleware
 
 import (
 	"go101/model"
+	"go101/response"
 	"net/http"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
 
-func AuthMiddleware() gin.HandlerFunc {
+func Auth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Implement your authentication logic here
 		// For example, check for a valid session or token
 		uid := getAdminIDFromContext(c)
 		if uid == 0 {
-			c.AbortWithStatus(http.StatusUnauthorized)
+			response.CommonError(c, http.StatusUnauthorized, "unauthorized")
+			c.Abort()
 
 			return
 		}
@@ -22,12 +24,13 @@ func AuthMiddleware() gin.HandlerFunc {
 	}
 }
 
-func PermissionMiddleware(requiredPermission string) gin.HandlerFunc {
+func Permission(requiredPermission string) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		uid := getAdminIDFromContext(c)
 		admin, err := model.GetAdminById(uid)
 		if err != nil || !admin.HasPermission(requiredPermission) {
-			c.AbortWithStatus(http.StatusForbidden)
+			response.CommonError(c, http.StatusForbidden, "forbidden")
+			c.Abort()
 			return
 		}
 		c.Next()
