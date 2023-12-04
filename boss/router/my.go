@@ -83,6 +83,16 @@ func changePwd(c *gin.Context) {
 
 }
 
+func getProfile(c *gin.Context) {
+	uid := sessions.Default(c).Get("uid").(uint)
+	admin, err := model.GetAdminById(uid)
+	if err != nil {
+		response.CommonError(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	response.OK(c, admin)
+}
+
 type updateProfileReq struct {
 	Nickname string `json:"nickname"`
 	Avatar   string `json:"avatar"`
@@ -95,13 +105,8 @@ func updateProfile(c *gin.Context) {
 		return
 	}
 	uid := sessions.Default(c).Get("uid").(uint)
-	admin, err := model.GetAdminById(uid)
-	if err != nil {
-		response.CommonError(c, http.StatusInternalServerError, err.Error())
-		return
-	}
 	a := &model.Admin{
-		Model:    model.Model{ID: admin.ID},
+		Model:    model.Model{ID: uid},
 		Nickname: req.Nickname,
 		Avatar:   req.Avatar,
 	}

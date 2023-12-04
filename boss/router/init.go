@@ -17,6 +17,7 @@ func InitRoute(r *gin.RouterGroup) {
 	r.GET("/logout", logout)
 	r.Use(middleware.Auth())
 	r.POST("/changePwd", changePwd)
+	r.GET("/profile", getProfile)
 	r.POST("/profile", updateProfile)
 	r.GET("/ping", p("ping"), ping)
 
