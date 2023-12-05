@@ -28,6 +28,10 @@ func login(c *gin.Context) {
 		response.BizError(c, response.ErrorNotExist, nil)
 		return
 	}
+	if a.DisabledAt > 0 {
+		response.BizError(c, response.AccountDisabled, nil)
+		return
+	}
 	check := util.CheckPasswordHash(req.Password, a.PwdHash)
 	if !check {
 		response.BizError(c, response.PasswordWrong, nil)

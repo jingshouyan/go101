@@ -23,10 +23,13 @@ type Admin struct {
 	Avatar     string `json:"avatar"`
 	RoleID     uint   `json:"roleId"`
 	Role       Role   `json:"role"`
-	DisabledAt int64  `json:"disabledAt"`
+	DisabledAt int64  `json:"disabledAt" gorm:"default:-1"`
 }
 
 func (a *Admin) HasPermission(requiredPermission string) bool {
+	if a.DisabledAt > 0 {
+		return false
+	}
 	if a.Role.All {
 		return true
 	}

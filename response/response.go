@@ -12,7 +12,8 @@ const (
 	ErrorExist    = 10001
 	ErrorNotExist = 10002
 
-	PasswordWrong = 20001
+	PasswordWrong   = 20001
+	AccountDisabled = 20002
 )
 
 func OK(c *gin.Context, data interface{}) {

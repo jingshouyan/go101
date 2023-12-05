@@ -6,6 +6,7 @@ require (
 	github.com/gin-contrib/sessions v0.0.5
 	github.com/gin-gonic/gin v1.9.1
 	github.com/spf13/viper v1.17.0
+	github.com/unknwon/com v1.0.1
 	go.uber.org/zap v1.26.0
 	golang.org/x/crypto v0.16.0
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1

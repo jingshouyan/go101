@@ -18,7 +18,14 @@ func InitRoute(r *gin.RouterGroup) {
 	r.Use(middleware.Auth())
 	r.POST("/changePwd", changePwd)
 	r.GET("/profile", getProfile)
-	r.POST("/profile", updateProfile)
+	r.PUT("/profile", updateProfile)
 	r.GET("/ping", p("ping"), ping)
+
+	r.GET("/admin", p("admin:list"), pageQueryAdmin)
+	r.GET("/admin/:id", p("admin:get"), getAdminById)
+	r.POST("/admin", p("admin:add"), addAdmin)
+	r.PUT("/admin/:id", p("admin:edit"), editAdmin)
+	r.DELETE("/admin/:id", p("admin:delete"), deleteAdmin)
+	r.PUT("/admin/:id/state", p("admin:state"), changeAdminState)
 
 }
