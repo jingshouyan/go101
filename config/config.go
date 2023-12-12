@@ -27,6 +27,7 @@ type ServerConfig struct {
 	ReadTimeout    time.Duration `json:"read_timeout"`
 	WriteTimeout   time.Duration `json:"write_timeout"`
 	MaxHeaderBytes int           `json:"max_header_bytes"`
+	Pprof          bool          `json:"pprof"`
 }
 
 type DBConfig struct {

@@ -4,6 +4,7 @@ addr = "127.0.0.1:8080"
 readTimeout = "60s"
 writeTimeout = "60s"
 maxHeaderBytes = 102400
+pprof=true
 [logger]
 filename = "./logs/go101.log"
 maxSize = 100

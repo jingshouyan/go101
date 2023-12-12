@@ -6,6 +6,7 @@ import (
 	"go101/middleware"
 	"net/http"
 
+	"github.com/gin-contrib/pprof"
 	"github.com/gin-gonic/gin"
 	"go.uber.org/zap"
 )
@@ -34,7 +35,9 @@ func Serve() {
 }
 
 func addRouter(r *gin.Engine) {
-
+	if cfg.Pprof {
+		pprof.Register(r)
+	}
 	bossGroup := r.Group("/boss")
 	bossrouter.InitRoute(bossGroup)
 

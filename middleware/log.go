@@ -17,20 +17,36 @@ import (
 
 var log = zap.L()
 
+const (
+	ContentType     = "Content-Type"
+	ContentTypeJSON = "application/json"
+)
+
 type bodyLogWriter struct {
 	gin.ResponseWriter
 	body *bytes.Buffer
 }
 
 func (w bodyLogWriter) Write(b []byte) (int, error) {
-	w.body.Write(b)
+	ct := w.ResponseWriter.Header().Get(ContentType)
+	// Only log JSON responses.
+	if json(ct) {
+		w.body.Write(b)
+	}
 	return w.ResponseWriter.Write(b)
+}
+
+func json(contextType string) bool {
+	return strings.HasPrefix(contextType, ContentTypeJSON)
 }
 
 func GinLogger() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		req, _ := io.ReadAll(c.Request.Body)
-		c.Request.Body = io.NopCloser(bytes.NewBuffer(req))
+		var req []byte
+		if json(c.GetHeader(ContentType)) {
+			req, _ = io.ReadAll(c.Request.Body)
+			c.Request.Body = io.NopCloser(bytes.NewBuffer(req))
+		}
 		start := time.Now()
 		path := c.Request.URL.Path
 		query := c.Request.URL.RawQuery
