@@ -7,7 +7,6 @@ import (
 	"go101/util"
 	"net/http"
 
-	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
 
@@ -45,10 +44,4 @@ func Permission(requiredPermission string) gin.HandlerFunc {
 
 func GetAllPermissions() []string {
 	return permissions.Values()
-}
-
-func getAdminIDFromContext(c *gin.Context) uint {
-	session := sessions.Default(c)
-	uid, _ := session.Get("aid").(uint)
-	return uid
 }
