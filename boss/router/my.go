@@ -25,16 +25,16 @@ func login(c *gin.Context) {
 	}
 	a, err := model.GetAdminByAccount(req.Type, req.Account)
 	if err != nil {
-		response.BizError(c, response.ErrorNotExist, nil)
+		response.BizError(c, response.ErrorNotExist)
 		return
 	}
 	if a.DisabledAt > 0 {
-		response.BizError(c, response.AccountDisabled, nil)
+		response.BizError(c, response.AccountDisabled)
 		return
 	}
 	check := util.CheckPasswordHash(req.Password, a.PwdHash)
 	if !check {
-		response.BizError(c, response.PasswordWrong, nil)
+		response.BizError(c, response.PasswordWrong)
 		return
 	}
 	util.SaveAdminIDToSession(c, a.ID)
@@ -44,7 +44,7 @@ func login(c *gin.Context) {
 
 func logout(c *gin.Context) {
 	util.ClearSession(c)
-	response.OK(c, nil)
+	response.OK(c)
 }
 
 type changePwdReq struct {
@@ -66,7 +66,7 @@ func changePwd(c *gin.Context) {
 	}
 	check := util.CheckPasswordHash(req.OldPwd, admin.PwdHash)
 	if !check {
-		response.BizError(c, response.PasswordWrong, nil)
+		response.BizError(c, response.PasswordWrong)
 		return
 	}
 	hash, err := util.HashPassword(req.NewPwd)
@@ -79,7 +79,7 @@ func changePwd(c *gin.Context) {
 		PwdHash: hash,
 	}
 	model.UpdateAdmin(a)
-	response.OK(c, nil)
+	response.OK(c)
 
 }
 
@@ -111,7 +111,7 @@ func updateProfile(c *gin.Context) {
 		Avatar:   req.Avatar,
 	}
 	model.UpdateAdmin(a)
-	response.OK(c, nil)
+	response.OK(c)
 }
 
 func ping(c *gin.Context) {

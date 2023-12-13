@@ -16,23 +16,43 @@ const (
 	AccountDisabled = 20002
 )
 
-func OK(c *gin.Context, data interface{}) {
-	c.JSON(http.StatusOK, gin.H{
-		"code": Success,
-		"data": data,
-	})
+func OK(c *gin.Context, data ...interface{}) {
+	if len(data) > 0 {
+		c.JSON(http.StatusOK, gin.H{
+			"code": Success,
+			"data": data[0],
+		})
+
+	} else {
+		c.JSON(http.StatusOK, gin.H{
+			"code": Success,
+		})
+	}
+
 }
 
-func BizError(c *gin.Context, code int, data interface{}) {
-	c.JSON(http.StatusOK, gin.H{
-		"code": code,
-		"data": data,
-	})
+func BizError(c *gin.Context, code int, data ...interface{}) {
+	if len(data) > 0 {
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+			"data": data[0],
+		})
+	} else {
+		c.JSON(http.StatusOK, gin.H{
+			"code": code,
+		})
+	}
 }
 
-func CommonError(c *gin.Context, code int, data interface{}) {
-	c.JSON(code, gin.H{
-		"code": code,
-		"data": data,
-	})
+func CommonError(c *gin.Context, code int, data ...interface{}) {
+	if len(data) > 0 {
+		c.JSON(code, gin.H{
+			"code": code,
+			"data": data,
+		})
+	} else {
+		c.JSON(code, gin.H{
+			"code": code,
+		})
+	}
 }

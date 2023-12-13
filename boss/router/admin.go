@@ -14,12 +14,12 @@ func pageQueryAdmin(c *gin.Context) {
 	limit, offset := util.GetLimitOffset(c)
 	admins, err := model.GetAdmins(limit, offset, nil)
 	if err != nil {
-		response.CommonError(c, http.StatusInternalServerError, nil)
+		response.CommonError(c, http.StatusInternalServerError)
 		return
 	}
 	total, err := model.CountAdmins(nil)
 	if err != nil {
-		response.CommonError(c, http.StatusInternalServerError, nil)
+		response.CommonError(c, http.StatusInternalServerError)
 		return
 	}
 	page := util.PageResult(total, admins)
@@ -104,7 +104,7 @@ func deleteAdmin(c *gin.Context) {
 		response.CommonError(c, http.StatusInternalServerError, err.Error())
 		return
 	}
-	response.OK(c, nil)
+	response.OK(c)
 }
 
 type changeStatusReq struct {

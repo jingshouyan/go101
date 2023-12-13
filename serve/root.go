@@ -35,9 +35,9 @@ func Serve() {
 }
 
 func addRouter(r *gin.Engine) {
-	if cfg.Pprof {
-		pprof.Register(r)
-	}
+	dg := r.Group("/debug")
+	dg.Use(middleware.PprofAuth())
+	pprof.RouteRegister(dg, "/pprof")
 	bossGroup := r.Group("/boss")
 	bossrouter.InitRoute(bossGroup)
 
