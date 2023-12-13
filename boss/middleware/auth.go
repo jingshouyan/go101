@@ -14,15 +14,15 @@ var permissions = util.NewSet[string]()
 
 func Auth() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// Implement your authentication logic here
-		// For example, check for a valid session or token
-		uid := getAdminIDFromContext(c)
-		if uid == 0 {
+
+		aid := getAdminIDFromContext(c)
+		if aid == 0 {
 			response.CommonError(c, http.StatusUnauthorized, "unauthorized")
 			c.Abort()
 
 			return
 		}
+		c.Keys["aid"] = aid
 		c.Next()
 	}
 }
@@ -30,8 +30,8 @@ func Auth() gin.HandlerFunc {
 func Permission(requiredPermission string) gin.HandlerFunc {
 	permissions.Add(requiredPermission)
 	return func(c *gin.Context) {
-		uid := getAdminIDFromContext(c)
-		admin, err := model.GetAdminById(uid)
+		aid := c.Keys["aid"].(uint)
+		admin, err := model.GetAdminById(aid)
 		if err != nil || !admin.HasPermission(requiredPermission) {
 			response.CommonError(c, http.StatusForbidden, "forbidden")
 			c.Abort()
@@ -47,6 +47,6 @@ func GetAllPermissions() []string {
 
 func getAdminIDFromContext(c *gin.Context) uint {
 	session := sessions.Default(c)
-	uid, _ := session.Get("uid").(uint)
+	uid, _ := session.Get("aid").(uint)
 	return uid
 }

@@ -38,7 +38,7 @@ func login(c *gin.Context) {
 		return
 	}
 	session := sessions.Default(c)
-	session.Set("uid", a.ID)
+	session.Set("aid", a.ID)
 	session.Save()
 	response.OK(c, a)
 
@@ -62,8 +62,8 @@ func changePwd(c *gin.Context) {
 		response.CommonError(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	uid := sessions.Default(c).Get("uid").(uint)
-	admin, err := model.GetAdminById(uid)
+	aid := c.Keys["aid"].(uint)
+	admin, err := model.GetAdminById(aid)
 	if err != nil {
 		response.CommonError(c, http.StatusInternalServerError, err.Error())
 		return
@@ -88,8 +88,8 @@ func changePwd(c *gin.Context) {
 }
 
 func getProfile(c *gin.Context) {
-	uid := sessions.Default(c).Get("uid").(uint)
-	admin, err := model.GetAdminById(uid)
+	aid := c.Keys["aid"].(uint)
+	admin, err := model.GetAdminById(aid)
 	if err != nil {
 		response.CommonError(c, http.StatusInternalServerError, err.Error())
 		return
@@ -108,9 +108,9 @@ func updateProfile(c *gin.Context) {
 		response.CommonError(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	uid := sessions.Default(c).Get("uid").(uint)
+	aid := c.Keys["aid"].(uint)
 	a := &model.Admin{
-		Model:    model.Model{ID: uid},
+		Model:    model.Model{ID: aid},
 		Nickname: req.Nickname,
 		Avatar:   req.Avatar,
 	}
