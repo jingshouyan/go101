@@ -1,12 +1,12 @@
 package router
 
 import (
+	"go101/g"
 	"go101/model"
 	"go101/response"
 	"go101/util"
 	"net/http"
 
-	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
 
@@ -37,17 +37,13 @@ func login(c *gin.Context) {
 		response.BizError(c, response.PasswordWrong, nil)
 		return
 	}
-	session := sessions.Default(c)
-	session.Set("aid", a.ID)
-	session.Save()
+	util.SaveAdminIDToSession(c, a.ID)
 	response.OK(c, a)
 
 }
 
 func logout(c *gin.Context) {
-	session := sessions.Default(c)
-	session.Clear()
-	session.Save()
+	util.ClearSession(c)
 	response.OK(c, nil)
 }
 
@@ -62,7 +58,7 @@ func changePwd(c *gin.Context) {
 		response.CommonError(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	aid := c.Keys["aid"].(uint)
+	aid := c.GetUint(g.AdminIdKey)
 	admin, err := model.GetAdminById(aid)
 	if err != nil {
 		response.CommonError(c, http.StatusInternalServerError, err.Error())
@@ -88,7 +84,7 @@ func changePwd(c *gin.Context) {
 }
 
 func getProfile(c *gin.Context) {
-	aid := c.Keys["aid"].(uint)
+	aid := c.GetUint(g.AdminIdKey)
 	admin, err := model.GetAdminById(aid)
 	if err != nil {
 		response.CommonError(c, http.StatusInternalServerError, err.Error())
@@ -108,7 +104,7 @@ func updateProfile(c *gin.Context) {
 		response.CommonError(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	aid := c.Keys["aid"].(uint)
+	aid := c.GetUint(g.AdminIdKey)
 	a := &model.Admin{
 		Model:    model.Model{ID: aid},
 		Nickname: req.Nickname,

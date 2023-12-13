@@ -1,6 +1,7 @@
 package middleware
 
 import (
+	"go101/g"
 	"go101/model"
 	"go101/response"
 	"go101/util"
@@ -15,14 +16,15 @@ var permissions = util.NewSet[string]()
 func Auth() gin.HandlerFunc {
 	return func(c *gin.Context) {
 
-		aid := getAdminIDFromContext(c)
+		aid := util.GetAdminIDFormSession(c)
 		if aid == 0 {
 			response.CommonError(c, http.StatusUnauthorized, "unauthorized")
 			c.Abort()
 
 			return
 		}
-		c.Keys["aid"] = aid
+		c.Set(g.AdminIdKey, aid)
+		c.Set(g.AuthType, g.AuthTypeSession)
 		c.Next()
 	}
 }
@@ -30,7 +32,7 @@ func Auth() gin.HandlerFunc {
 func Permission(requiredPermission string) gin.HandlerFunc {
 	permissions.Add(requiredPermission)
 	return func(c *gin.Context) {
-		aid := c.Keys["aid"].(uint)
+		aid := c.GetUint(g.AdminIdKey)
 		admin, err := model.GetAdminById(aid)
 		if err != nil || !admin.HasPermission(requiredPermission) {
 			response.CommonError(c, http.StatusForbidden, "forbidden")
