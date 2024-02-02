@@ -4,6 +4,7 @@ import (
 	bossrouter "go101/boss/router"
 	"go101/config"
 	"go101/middleware"
+	"go101/storage"
 	"net/http"
 
 	"github.com/gin-contrib/pprof"
@@ -40,6 +41,10 @@ func addRouter(r *gin.Engine) {
 	pprof.RouteRegister(dg, "/pprof")
 	bossGroup := r.Group("/boss")
 	bossrouter.InitRoute(bossGroup)
+
+	s := storage.NewStorage()
+
+	r.POST("/upload", s.Upload)
 
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{

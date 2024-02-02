@@ -7,9 +7,10 @@ import (
 )
 
 type Config struct {
-	Server ServerConfig `json:"server"`
-	Logger LoggerConfig `json:"logger"`
-	DB     DBConfig     `json:"db"`
+	Server  ServerConfig  `json:"server"`
+	Logger  LoggerConfig  `json:"logger"`
+	DB      DBConfig      `json:"db"`
+	Storage StorageConfig `json:"storage"`
 }
 
 type LoggerConfig struct {
@@ -38,6 +39,30 @@ type DBConfig struct {
 	Password    string `json:"password"`
 	Name        string `json:"name"`
 	TablePrefix string `json:"table_prefix"`
+}
+
+const (
+	StorageDriverMinio = "minio"
+	StorageDriverLocal = "local"
+)
+
+type StorageConfig struct {
+	Driver string             `json:"driver"`
+	Minio  MinioConfig        `json:"minio"`
+	Local  LocalStorageConfig `json:"local"`
+}
+
+type LocalStorageConfig struct {
+	Path string `json:"path"`
+}
+
+type MinioConfig struct {
+	Endpoint        string `json:"endpoint"`
+	UseSSL          bool   `json:"use_ssl"`
+	AccessKeyID     string `json:"access_key_id"`
+	SecretAccessKey string `json:"secret_access_key"`
+	Bucket          string `json:"bucket"`
+	Region          string `json:"region"`
 }
 
 var Conf Config
