@@ -45,6 +45,7 @@ func addRouter(r *gin.Engine) {
 	s := storage.NewStorage()
 
 	r.POST("/upload", s.Upload)
+	r.GET("/download", s.Download)
 
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{

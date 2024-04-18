@@ -48,7 +48,7 @@ func CommonError(c *gin.Context, code int, data ...interface{}) {
 	if len(data) > 0 {
 		c.JSON(code, gin.H{
 			"code": code,
-			"data": data,
+			"data": data[0],
 		})
 	} else {
 		c.JSON(code, gin.H{

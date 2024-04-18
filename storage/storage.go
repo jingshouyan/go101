@@ -9,6 +9,7 @@ import (
 
 type Storage interface {
 	Upload(c *gin.Context)
+	Download(c *gin.Context)
 }
 
 var log = zap.L()

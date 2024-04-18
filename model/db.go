@@ -50,6 +50,7 @@ func init() {
 func migrate() {
 	db.AutoMigrate(&Admin{})
 	db.AutoMigrate(&Role{})
+	db.AutoMigrate(&File{})
 }
 
 func initRole() {

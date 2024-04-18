@@ -16,6 +16,13 @@ type Model struct {
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"deleteAt"`
 }
 
+type ModelStringKey struct {
+	ID        string         `gorm:"primarykey" json:"id"`
+	CreatedAt time.Time      `json:"createdAt"`
+	UpdatedAt time.Time      `json:"updatedAt"`
+	DeletedAt gorm.DeletedAt `gorm:"index" json:"deleteAt"`
+}
+
 type StringSlice []string
 
 func (s StringSlice) GormDataType() string {

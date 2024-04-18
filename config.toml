@@ -24,7 +24,7 @@ driver = "minio"
 [storage.minio]
 endpoint = "192.168.0.53:9000"
 useSSL = false
-accessKey = "5bzZRFVu8Va8Zz65HEZ4"
-secretKey = "GsaeatjdjexlPz2A1rWC7HT6FtNITrBtRRtl3JNQ"
+accessKeyID = "JXrDXdWwNQmJSfQkGgN7"
+secretAccessKey = "LLAvfdyNWecV5py5jCHK0IRaVQos43KvO2KxJ1F5"
 bucket = "go101"
 region = "cn-east-1"
