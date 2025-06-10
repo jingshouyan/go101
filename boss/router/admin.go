@@ -32,7 +32,7 @@ func getAdminById(c *gin.Context) {
 		response.CommonError(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	admin, err := model.GetAdminById(uint(id))
+	admin, err := model.GetAdminById(id)
 	if err != nil {
 		response.CommonError(c, http.StatusInternalServerError, err.Error())
 		return
@@ -43,7 +43,7 @@ func getAdminById(c *gin.Context) {
 type editAdminReq struct {
 	Nickname string `json:"nickname"`
 	Avatar   string `json:"avatar"`
-	RoleID   uint   `json:"roleId"`
+	RoleID   int64  `json:"roleId"`
 }
 
 func editAdmin(c *gin.Context) {
@@ -58,7 +58,7 @@ func editAdmin(c *gin.Context) {
 		return
 	}
 	a := &model.Admin{
-		Model:    model.Model{ID: uint(id)},
+		Model:    model.Model{ID: id},
 		Nickname: req.Nickname,
 		Avatar:   req.Avatar,
 		RoleID:   req.RoleID,
@@ -71,7 +71,7 @@ type addAdminReq struct {
 	Username string `json:"username" binding:"required"`
 	Nickname string `json:"nickname" binding:"required"`
 	Avatar   string `json:"avatar"`
-	RoleID   uint   `json:"roleId" binding:"required"`
+	RoleID   int64  `json:"roleId" binding:"required"`
 }
 
 func addAdmin(c *gin.Context) {
@@ -100,7 +100,7 @@ func deleteAdmin(c *gin.Context) {
 		response.CommonError(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	if err := model.DeleteAdmin(uint(id)); err != nil {
+	if err := model.DeleteAdmin(id); err != nil {
 		response.CommonError(c, http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -127,7 +127,7 @@ func changeAdminState(c *gin.Context) {
 		disabledAt = util.GetCurrentTimeMs()
 	}
 	a := &model.Admin{
-		Model:      model.Model{ID: uint(id)},
+		Model:      model.Model{ID: id},
 		DisabledAt: disabledAt,
 	}
 	model.UpdateAdmin(a)

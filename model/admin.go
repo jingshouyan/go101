@@ -21,7 +21,7 @@ type Admin struct {
 	PwdHash    string `json:"-"`
 	Nickname   string `json:"nickname"`
 	Avatar     string `json:"avatar"`
-	RoleID     uint   `json:"roleId"`
+	RoleID     int64  `json:"roleId"`
 	Role       Role   `json:"role"`
 	DisabledAt int64  `json:"disabledAt" gorm:"default:-1"`
 }
@@ -50,11 +50,11 @@ func UpdateAdmin(a *Admin) (bool, error) {
 	return r.RowsAffected > 0, r.Error
 }
 
-func DeleteAdmin(id uint) error {
+func DeleteAdmin(id int64) error {
 	return db.Delete(&Admin{}, id).Error
 }
 
-func GetAdminById(id uint) (a Admin, err error) {
+func GetAdminById(id int64) (a Admin, err error) {
 	err = db.Preload(clause.Associations).First(&a, id).Error
 	return
 }

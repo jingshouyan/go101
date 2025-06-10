@@ -17,11 +17,11 @@ func UpdateRole(r *Role) (bool, error) {
 	return r1.RowsAffected > 0, r1.Error
 }
 
-func DeleteRole(id uint) error {
+func DeleteRole(id uint64) error {
 	return db.Delete(&Role{}, id).Error
 }
 
-func GetRoleById(id uint) (r Role, err error) {
+func GetRoleById(id uint64) (r Role, err error) {
 	err = db.First(&r, id).Error
 	return
 }

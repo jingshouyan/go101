@@ -9,7 +9,7 @@ type File struct {
 	Size       int64  `json:"size"`
 	MD5        string `json:"md5" gorm:"index"`
 	IsDir      bool   `json:"isDir"`
-	UploaderID uint   `json:"uploaderId"`
+	UploaderID int64  `json:"uploaderId"`
 	Idx        string `json:"idx" gorm:"index"`
 }
 

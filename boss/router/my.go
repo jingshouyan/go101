@@ -1,7 +1,6 @@
 package router
 
 import (
-	"go101/g"
 	"go101/model"
 	"go101/response"
 	"go101/util"
@@ -58,7 +57,7 @@ func changePwd(c *gin.Context) {
 		response.CommonError(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	aid := c.GetUint(g.AdminIdKey)
+	aid := util.GetAdminIDFormSession(c)
 	admin, err := model.GetAdminById(aid)
 	if err != nil {
 		response.CommonError(c, http.StatusInternalServerError, err.Error())
@@ -84,7 +83,7 @@ func changePwd(c *gin.Context) {
 }
 
 func getProfile(c *gin.Context) {
-	aid := c.GetUint(g.AdminIdKey)
+	aid := util.GetAdminIDFormSession(c)
 	admin, err := model.GetAdminById(aid)
 	if err != nil {
 		response.CommonError(c, http.StatusInternalServerError, err.Error())
@@ -104,7 +103,7 @@ func updateProfile(c *gin.Context) {
 		response.CommonError(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	aid := c.GetUint(g.AdminIdKey)
+	aid := util.GetAdminIDFormSession(c)
 	a := &model.Admin{
 		Model:    model.Model{ID: aid},
 		Nickname: req.Nickname,

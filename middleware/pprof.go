@@ -14,11 +14,11 @@ const (
 
 func PprofAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if c.GetHeader(pprofTokenKey) != config.Conf.Server.PprofToken {
-			response.CommonError(c, http.StatusForbidden)
-			c.Abort()
+		if c.GetHeader(pprofTokenKey) == config.Conf.Server.PprofToken {
+			c.Next()
 			return
 		}
-		c.Next()
+		response.CommonError(c, http.StatusForbidden)
+		c.Abort()
 	}
 }

@@ -31,7 +31,7 @@ func Auth() gin.HandlerFunc {
 func Permission(requiredPermission string) gin.HandlerFunc {
 	permissions.Add(requiredPermission)
 	return func(c *gin.Context) {
-		aid := c.GetUint(g.AdminIdKey)
+		aid := util.GetAdminIDFormSession(c)
 		admin, err := model.GetAdminById(aid)
 		if err != nil || !admin.HasPermission(requiredPermission) {
 			response.CommonError(c, http.StatusForbidden, "forbidden")
