@@ -29,4 +29,4 @@ secretAccessKey = "LLAvfdyNWecV5py5jCHK0IRaVQos43KvO2KxJ1F5"
 bucket = "go101"
 region = "cn-east-1"
 [storage.local]
-rootPath = "./storage"
+rootPath = "data/uploads"

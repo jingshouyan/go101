@@ -57,6 +57,7 @@ func GinLogger() gin.HandlerFunc {
 		c.Next()
 
 		rsp := blw.body.Bytes()
+		// rsp := []byte{}
 
 		cost := time.Since(start)
 		log.Info(path,

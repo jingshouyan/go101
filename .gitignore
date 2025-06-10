@@ -25,3 +25,5 @@ logs/
 .vscode/
 
 *.sqlite
+
+data/

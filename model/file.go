@@ -1,6 +1,8 @@
 package model
 
-import "github.com/google/uuid"
+import (
+	"go101/util"
+)
 
 type File struct {
 	ModelStringKey
@@ -14,12 +16,12 @@ type File struct {
 }
 
 func AddFile(f *File) error {
-	f.ID = uuid.NewString()
+	f.ID = util.GenStringId()
 	return db.Create(f).Error
 }
 
 func GetFileById(id string) (f File, err error) {
-	err = db.First(&f, id).Error
+	err = db.First(&f, map[string]interface{}{"id": id}).Error
 	return
 }
 
