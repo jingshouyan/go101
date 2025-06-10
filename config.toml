@@ -20,7 +20,7 @@ user = "root"
 password = "Abc@123"
 name = "go101.sqlite"
 [storage]
-driver = "minio"
+driver = "local"
 [storage.minio]
 endpoint = "192.168.0.53:9000"
 useSSL = false
@@ -28,3 +28,5 @@ accessKeyID = "JXrDXdWwNQmJSfQkGgN7"
 secretAccessKey = "LLAvfdyNWecV5py5jCHK0IRaVQos43KvO2KxJ1F5"
 bucket = "go101"
 region = "cn-east-1"
+[storage.local]
+rootPath = "./storage"

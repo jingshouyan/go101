@@ -34,7 +34,7 @@ func (c *WarpCore) Check(ent zapcore.Entry, ce *zapcore.CheckedEntry) *zapcore.C
 }
 
 func (c *WarpCore) Write(ent zapcore.Entry, fields []zapcore.Field) error {
-	fields = append(fields, zap.Int64("_goroutine", routine.Goid()))
+	fields = append(fields, zap.Uint64("_goroutine", routine.Goid()))
 	return c.Core.Write(ent, fields)
 }
 

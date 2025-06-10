@@ -1,6 +1,7 @@
 package model
 
 import (
+	"database/sql"
 	"fmt"
 	"go101/config"
 	"go101/util"
@@ -12,6 +13,8 @@ import (
 	"gorm.io/gorm/logger"
 	"gorm.io/gorm/schema"
 	"moul.io/zapgorm2"
+
+	_ "modernc.org/sqlite"
 )
 
 var cfg = config.Conf.DB
@@ -30,7 +33,12 @@ func init() {
 		Context:                   nil,
 	}
 	glog.SetAsDefault()
-	db, err = gorm.Open(sqlite.Open(cfg.Name), &gorm.Config{
+	sqlDB, err := sql.Open("sqlite", cfg.Name)
+	if err != nil {
+		log.Fatal("failed to open DB:", zap.Error(err))
+	}
+
+	db, err = gorm.Open(sqlite.Dialector{Conn: sqlDB}, &gorm.Config{
 		SkipDefaultTransaction: false,
 		NamingStrategy: schema.NamingStrategy{
 			TablePrefix:   cfg.TablePrefix,

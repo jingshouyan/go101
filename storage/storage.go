@@ -19,7 +19,10 @@ func NewStorage() Storage {
 	switch driver {
 	case "minio":
 		return NewMinioStorage()
+	case "local":
+		return NewLocalStorage()
 	}
+
 	log.Panic("storage driver not found", zap.String("driver", driver))
 	return nil
 }

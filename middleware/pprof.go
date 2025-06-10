@@ -14,7 +14,11 @@ const (
 
 func PprofAuth() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		if c.GetHeader(pprofTokenKey) == config.Conf.Server.PprofToken {
+		token := c.GetHeader(pprofTokenKey)
+		if token == "" {
+			token = c.Query(pprofTokenKey)
+		}
+		if token == config.Conf.Server.PprofToken {
 			c.Next()
 			return
 		}

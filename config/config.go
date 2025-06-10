@@ -53,7 +53,7 @@ type StorageConfig struct {
 }
 
 type LocalStorageConfig struct {
-	Path string `json:"path"`
+	RootPath string `json:"root_path"`
 }
 
 type MinioConfig struct {
