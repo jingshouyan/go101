@@ -9,6 +9,7 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"path"
 
 	"github.com/gin-gonic/gin"
@@ -104,8 +105,9 @@ func Download(c *gin.Context) {
 	}
 	defer reader.Close()
 
+	encodedFileName := url.QueryEscape(f.Name)
 	// 设置响应头
-	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename=%s", f.Name))
+	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename*=UTF-8''%s", encodedFileName))
 	c.Header("Content-Type", "application/octet-stream")
 
 	_, err = io.Copy(c.Writer, reader)
