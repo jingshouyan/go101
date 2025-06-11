@@ -2,6 +2,7 @@ package storage
 
 import (
 	"context"
+	"encoding/hex"
 	"go101/config"
 	"go101/model"
 	"io"
@@ -46,14 +47,16 @@ func newMinioStorage() *minioStorage {
 	return &minioStorage{c: c, cfg: cfg}
 }
 
-func (s *minioStorage) Save(fh *multipart.FileHeader, f *model.File) error {
+func (s *minioStorage) Save(fh *multipart.FileHeader, f *model.File) (string, error) {
 	file, err := fh.Open()
 	if err != nil {
-		return err
+		return "", err
 	}
 	defer file.Close()
-	_, err = s.c.PutObject(context.Background(), s.cfg.Bucket, f.Idx, file, fh.Size, minio.PutObjectOptions{})
-	return err
+	hasher := newHasher()
+	_, err = s.c.PutObject(context.Background(), s.cfg.Bucket, f.Idx, io.TeeReader(file, hasher), fh.Size, minio.PutObjectOptions{})
+	hashSum := hex.EncodeToString(hasher.Sum(nil))
+	return hashSum, err
 }
 
 func (s *minioStorage) Load(f *model.File) (io.ReadSeekCloser, int64, error) {

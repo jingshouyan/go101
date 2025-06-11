@@ -1,11 +1,13 @@
 package storage
 
 import (
+	"crypto/md5"
 	"fmt"
 	"go101/config"
 	"go101/model"
 	"go101/response"
 	"go101/util"
+	"hash"
 	"io"
 	"mime/multipart"
 	"net/http"
@@ -19,8 +21,12 @@ import (
 	"gorm.io/gorm"
 )
 
+const (
+	md5HeaderKey = "X-File-MD5"
+)
+
 type Storage interface {
-	Save(fh *multipart.FileHeader, f *model.File) error
+	Save(fh *multipart.FileHeader, f *model.File) (string, error)
 	Load(f *model.File) (io.ReadSeekCloser, int64, error)
 }
 
@@ -43,6 +49,13 @@ func newStorage() Storage {
 
 func Upload(c *gin.Context) {
 	md5 := c.Query("md5")
+	if md5 == "" {
+		md5 = c.GetHeader(md5HeaderKey)
+	}
+	if md5 == "" {
+		md5 = c.Request.FormValue("md5")
+	}
+
 	fh, err := c.FormFile("file")
 	if err != nil {
 		response.CommonError(c, http.StatusBadRequest, err.Error())
@@ -80,7 +93,11 @@ func Upload(c *gin.Context) {
 		UploaderID: 0,
 		Idx:        idx,
 	}
-	err = storage.Save(fh, f2)
+	md5Server, err := storage.Save(fh, f2)
+	if md5 != md5Server {
+		log.Warn("md5 mismatch", zap.String("client", md5), zap.String("server", md5Server))
+		f2.MD5 = md5Server // 更新实际存储的MD5
+	}
 	if err != nil {
 		response.CommonError(c, http.StatusBadRequest, err.Error())
 		return
@@ -110,20 +127,23 @@ func Download(c *gin.Context) {
 	encodedFileName := url.QueryEscape(f.Name)
 
 	rangeHeader := c.GetHeader("Range")
+	// 未指定下载范围
 	if rangeHeader == "" {
 		// 设置响应头
 		c.Header("Content-Length", fmt.Sprintf("%d", fileSize))
 		c.Header("Content-Disposition", fmt.Sprintf("attachment; filename*=UTF-8''%s", encodedFileName))
 		c.Header("Content-Type", "application/octet-stream")
+		c.Header(md5HeaderKey, f.MD5)
 		c.Status(http.StatusOK)
 		// 直接发送整个文件
 		_, err = io.Copy(c.Writer, rsc)
 		if err != nil {
-			log.Warn("copy file error", zap.Error(err))
+			log.Error("copy file error", zap.Error(err))
 		}
 		return
 	}
 
+	// 指定下载范围
 	start, end, err := parseRange(rangeHeader, fileSize)
 	if err != nil {
 		c.Header("Content-Range", fmt.Sprintf("bytes */%d", fileSize))
@@ -137,13 +157,14 @@ func Download(c *gin.Context) {
 	c.Header("Content-Length", fmt.Sprintf("%d", contentLength))
 	c.Header("Content-Type", "application/octet-stream")
 	c.Header("Content-Disposition", fmt.Sprintf("attachment; filename*=UTF-8''%s", encodedFileName))
+	c.Header(md5HeaderKey, f.MD5)
 	c.Status(http.StatusPartialContent)
 
 	// 发送指定字节
 	rsc.Seek(start, io.SeekStart)
 	_, err = io.CopyN(c.Writer, rsc, contentLength)
 	if err != nil {
-		log.Warn("copy file error", zap.Error(err))
+		log.Error("copy file error", zap.Error(err))
 	}
 
 }
@@ -186,4 +207,8 @@ func parseRange(header string, fileSize int64) (int64, int64, error) {
 
 func getExtension(fileName string) string {
 	return path.Ext(fileName)
+}
+
+func newHasher() hash.Hash {
+	return md5.New()
 }
