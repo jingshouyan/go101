@@ -8,6 +8,7 @@ import (
 	"io"
 	"mime/multipart"
 	"os"
+	"path/filepath"
 
 	"github.com/howeyc/crc16"
 	"go.uber.org/zap"
@@ -61,17 +62,22 @@ func (s *LocalStorage) Save(fh *multipart.FileHeader, f *model.File) error {
 	return nil
 }
 
-func (s *LocalStorage) Load(f *model.File) (io.ReadCloser, error) {
+func (s *LocalStorage) Load(f *model.File) (io.ReadSeekCloser, int64, error) {
 	pd := s.getParentDir(f.Idx)
-	filePath := fmt.Sprintf("%s/%s", pd, f.Idx)
-	file, err := os.Open(filePath)
-	return file, err
+	fp := filepath.Join(pd, f.Idx)
+	file, err := os.Open(fp)
+	if err != nil {
+		return nil, 0, err
+	}
+	info, err := file.Stat()
+	return file, info.Size(), err
 }
 
 func (s *LocalStorage) getParentDir(filename string) string {
 	crc := crc16.Checksum([]byte(filename), crc16.IBMTable)
 	bytes := make([]byte, 2)
 	binary.BigEndian.PutUint16(bytes, crc)
+
 	return fmt.Sprintf("%s/%02x/%02x/", s.RootPath, bytes[0], bytes[1])
 
 }

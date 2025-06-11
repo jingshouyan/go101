@@ -56,7 +56,11 @@ func (s *minioStorage) Save(fh *multipart.FileHeader, f *model.File) error {
 	return err
 }
 
-func (s *minioStorage) Load(f *model.File) (io.ReadCloser, error) {
-	readCloser, err := s.c.GetObject(context.Background(), s.cfg.Bucket, f.Idx, minio.GetObjectOptions{})
-	return readCloser, err
+func (s *minioStorage) Load(f *model.File) (io.ReadSeekCloser, int64, error) {
+	rsc, err := s.c.GetObject(context.Background(), s.cfg.Bucket, f.Idx, minio.GetObjectOptions{})
+	if err != nil {
+		return nil, 0, err
+	}
+	info, err := rsc.Stat()
+	return rsc, info.Size, err
 }
