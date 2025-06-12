@@ -28,6 +28,7 @@ const (
 type Storage interface {
 	Save(fh *multipart.FileHeader, f *model.File) (string, error)
 	Load(f *model.File) (io.ReadSeekCloser, int64, error)
+	Delete(f *model.File) error
 }
 
 var log = zap.L()
@@ -109,6 +110,9 @@ func Upload(c *gin.Context) {
 func Download(c *gin.Context) {
 	id := c.Query("id")
 	if id == "" {
+		id = c.Param("id")
+	}
+	if id == "" {
 		response.CommonError(c, http.StatusBadRequest, "filename is empty")
 		return
 	}
@@ -167,6 +171,38 @@ func Download(c *gin.Context) {
 		log.Error("copy file error", zap.Error(err))
 	}
 
+}
+
+func Delete(c *gin.Context) {
+	id := c.Param("id")
+	if id == "" {
+		response.CommonError(c, http.StatusBadRequest, "id is empty")
+		return
+	}
+	f, err := model.GetFileById(id)
+	if err != nil {
+		response.CommonError(c, http.StatusNotFound, err.Error())
+		return
+	}
+	err = model.DeleteFile(id)
+	if err != nil {
+		response.CommonError(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	count, err := model.CountFilesByIdx(f.Idx)
+	if err != nil {
+		response.CommonError(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+	if count == 0 {
+		// 当前文件是最后一个文件，删除文件
+		err = storage.Delete(&f)
+		if err != nil {
+			log.Error("delete file error", zap.String("id", id), zap.Error(err))
+		}
+	}
+
+	response.OK(c, nil)
 }
 
 // Range 格式示例：bytes=0-1023

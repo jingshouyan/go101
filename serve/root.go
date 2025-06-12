@@ -42,8 +42,8 @@ func addRouter(r *gin.Engine) {
 	bossGroup := r.Group("/boss")
 	bossrouter.InitRoute(bossGroup)
 
-	r.POST("/upload", storage.Upload)
-	r.GET("/download", storage.Download)
+	fileGroup := r.Group("/file")
+	storage.InitRoute(fileGroup)
 
 	r.GET("/ping", func(c *gin.Context) {
 		c.JSON(200, gin.H{

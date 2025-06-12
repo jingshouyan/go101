@@ -76,6 +76,12 @@ func (s *LocalStorage) Load(f *model.File) (io.ReadSeekCloser, int64, error) {
 	return file, info.Size(), err
 }
 
+func (s *LocalStorage) Delete(f *model.File) error {
+	pd := s.getParentDir(f.Idx)
+	fp := filepath.Join(pd, f.Idx)
+	return os.Remove(fp)
+}
+
 func (s *LocalStorage) getParentDir(filename string) string {
 	crc := crc16.Checksum([]byte(filename), crc16.IBMTable)
 	bytes := make([]byte, 2)

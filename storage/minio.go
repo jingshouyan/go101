@@ -67,3 +67,13 @@ func (s *minioStorage) Load(f *model.File) (io.ReadSeekCloser, int64, error) {
 	info, err := rsc.Stat()
 	return rsc, info.Size, err
 }
+
+func (s *minioStorage) Delete(f *model.File) error {
+	err := s.c.RemoveObject(context.Background(), s.cfg.Bucket, f.Idx, minio.RemoveObjectOptions{})
+	if err != nil {
+		log.Error("minio delete object error", zap.String("bucket", s.cfg.Bucket), zap.String("object", f.Idx), zap.Error(err))
+		return err
+	}
+	log.Info("minio object deleted", zap.String("bucket", s.cfg.Bucket), zap.String("object", f.Idx))
+	return nil
+}

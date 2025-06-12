@@ -31,5 +31,10 @@ func GetFileByMD5AndSize(md5 string, size int64) (f File, err error) {
 }
 
 func DeleteFile(id string) error {
-	return db.Delete(&File{}, id).Error
+	return db.Where("id = ?", id).Delete(&File{}).Error
+}
+
+func CountFilesByIdx(idx string) (count int64, err error) {
+	err = db.Model(&File{}).Where("idx = ?", idx).Count(&count).Error
+	return
 }
