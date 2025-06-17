@@ -16,7 +16,9 @@ type File struct {
 }
 
 func AddFile(f *File) error {
-	f.ID = util.GenStringId()
+	if f.ID == "" {
+		f.ID = util.GenStringId()
+	}
 	return db.Create(f).Error
 }
 

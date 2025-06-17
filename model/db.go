@@ -62,6 +62,9 @@ func migrate() {
 
 	db.AutoMigrate(&App{})
 	db.AutoMigrate(&User{})
+
+	db.AutoMigrate(&PartFile{})
+	db.AutoMigrate(&PartFileChunk{})
 }
 
 func initRole() {

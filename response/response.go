@@ -14,6 +14,8 @@ const (
 
 	PasswordWrong   = 20001
 	AccountDisabled = 20002
+
+	UploadUncomplete = 30001
 )
 
 func OK(c *gin.Context, data ...interface{}) {
