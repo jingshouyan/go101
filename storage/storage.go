@@ -2,6 +2,7 @@ package storage
 
 import (
 	"crypto/md5"
+	"encoding/hex"
 	"fmt"
 	"go101/config"
 	"go101/model"
@@ -9,7 +10,6 @@ import (
 	"go101/util"
 	"hash"
 	"io"
-	"mime/multipart"
 	"net/http"
 	"net/url"
 	"path"
@@ -26,7 +26,7 @@ const (
 )
 
 type Storage interface {
-	Save(fh *multipart.FileHeader, f *model.File) (string, error)
+	Save(r io.Reader, f *model.File) error
 	Load(f *model.File) (io.ReadSeekCloser, int64, error)
 	Delete(f *model.File) error
 }
@@ -94,15 +94,25 @@ func Upload(c *gin.Context) {
 		UploaderID: 0,
 		Idx:        idx,
 	}
-	md5Server, err := storage.Save(fh, f2)
-	if md5 != md5Server {
-		log.Warn("md5 mismatch", zap.String("client", md5), zap.String("server", md5Server))
-		f2.MD5 = md5Server // 更新实际存储的MD5
-	}
+	fr, err := fh.Open()
 	if err != nil {
 		response.CommonError(c, http.StatusBadRequest, err.Error())
 		return
 	}
+	defer fr.Close()
+	hasher := newHasher()
+
+	err = storage.Save(io.TeeReader(fr, hasher), f2)
+	if err != nil {
+		response.CommonError(c, http.StatusBadRequest, err.Error())
+		return
+	}
+	md5Server := hex.EncodeToString(hasher.Sum(nil))
+	if md5 != md5Server {
+		log.Warn("md5 mismatch", zap.String("client", md5), zap.String("server", md5Server))
+		f2.MD5 = md5Server // 更新实际存储的MD5
+	}
+
 	model.AddFile(f2)
 	response.OK(c, f2)
 }

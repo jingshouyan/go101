@@ -2,12 +2,10 @@ package storage
 
 import (
 	"encoding/binary"
-	"encoding/hex"
 	"fmt"
 	"go101/config"
 	"go101/model"
 	"io"
-	"mime/multipart"
 	"os"
 	"path/filepath"
 
@@ -36,33 +34,26 @@ func newLocalStorage() *LocalStorage {
 	}
 }
 
-func (s *LocalStorage) Save(fh *multipart.FileHeader, f *model.File) (string, error) {
+func (s *LocalStorage) Save(r io.Reader, f *model.File) error {
 	pd := s.getParentDir(f.Idx)
 	if err := os.MkdirAll(pd, 0755); err != nil {
 		log.Error("create parent directory error", zap.String("path", pd), zap.Error(err))
-		return "", err
+		return err
 	}
 	filePath := fmt.Sprintf("%s/%s", pd, f.Idx)
 	file, err := os.Create(filePath)
 	if err != nil {
 		log.Error("create file error", zap.String("path", filePath), zap.Error(err))
-		return "", err
+		return err
 	}
 	defer file.Close()
-	f2, err := fh.Open()
+
+	_, err = io.Copy(file, r)
 	if err != nil {
-		log.Error("open file header error", zap.String("filename", fh.Filename), zap.Error(err))
-		return "", err
+		log.Error("copy file error", zap.String("from", f.Name), zap.String("to", filePath), zap.Error(err))
+		return err
 	}
-	defer f2.Close()
-	hasher := newHasher()
-	_, err = io.Copy(file, io.TeeReader(f2, hasher))
-	if err != nil {
-		log.Error("copy file error", zap.String("from", fh.Filename), zap.String("to", filePath), zap.Error(err))
-		return "", err
-	}
-	hashSum := hex.EncodeToString(hasher.Sum(nil))
-	return hashSum, nil
+	return nil
 }
 
 func (s *LocalStorage) Load(f *model.File) (io.ReadSeekCloser, int64, error) {

@@ -2,11 +2,9 @@ package storage
 
 import (
 	"context"
-	"encoding/hex"
 	"go101/config"
 	"go101/model"
 	"io"
-	"mime/multipart"
 
 	"github.com/minio/minio-go/v7"
 	"github.com/minio/minio-go/v7/pkg/credentials"
@@ -47,16 +45,9 @@ func newMinioStorage() *minioStorage {
 	return &minioStorage{c: c, cfg: cfg}
 }
 
-func (s *minioStorage) Save(fh *multipart.FileHeader, f *model.File) (string, error) {
-	file, err := fh.Open()
-	if err != nil {
-		return "", err
-	}
-	defer file.Close()
-	hasher := newHasher()
-	_, err = s.c.PutObject(context.Background(), s.cfg.Bucket, f.Idx, io.TeeReader(file, hasher), fh.Size, minio.PutObjectOptions{})
-	hashSum := hex.EncodeToString(hasher.Sum(nil))
-	return hashSum, err
+func (s *minioStorage) Save(r io.Reader, f *model.File) error {
+	_, err := s.c.PutObject(context.Background(), s.cfg.Bucket, f.Idx, r, f.Size, minio.PutObjectOptions{})
+	return err
 }
 
 func (s *minioStorage) Load(f *model.File) (io.ReadSeekCloser, int64, error) {
