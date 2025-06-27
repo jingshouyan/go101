@@ -79,7 +79,7 @@ func (s *LocalStorage) getParentDir(filename string) string {
 	bytes := make([]byte, 2)
 	binary.BigEndian.PutUint16(bytes, crc)
 
-	return fmt.Sprintf("%s/%02x/%02x/", s.RootPath, bytes[0], bytes[1])
+	return filepath.Join(s.RootPath, fmt.Sprintf("%02x", bytes[0]), fmt.Sprintf("%02x", bytes[1]))
 
 }
 
