@@ -8,6 +8,7 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/howeyc/crc16"
 	"go.uber.org/zap"
@@ -40,17 +41,17 @@ func (s *LocalStorage) Save(r io.Reader, f *model.File) error {
 		log.Error("create parent directory error", zap.String("path", pd), zap.Error(err))
 		return err
 	}
-	filePath := fmt.Sprintf("%s/%s", pd, f.Idx)
-	file, err := os.Create(filePath)
+	fp := filepath.Join(pd, f.Idx)
+	file, err := os.Create(fp)
 	if err != nil {
-		log.Error("create file error", zap.String("path", filePath), zap.Error(err))
+		log.Error("create file error", zap.String("path", fp), zap.Error(err))
 		return err
 	}
 	defer file.Close()
 
 	_, err = io.Copy(file, r)
 	if err != nil {
-		log.Error("copy file error", zap.String("from", f.Name), zap.String("to", filePath), zap.Error(err))
+		log.Error("copy file error", zap.String("from", f.Name), zap.String("to", fp), zap.Error(err))
 		return err
 	}
 	return nil
@@ -80,4 +81,58 @@ func (s *LocalStorage) getParentDir(filename string) string {
 
 	return fmt.Sprintf("%s/%02x/%02x/", s.RootPath, bytes[0], bytes[1])
 
+}
+
+func (s *LocalStorage) InitPart(pf *model.PartFile) error {
+	pfp := s.getPartFilePath(pf)
+	err := os.MkdirAll(filepath.Dir(pfp), 0755)
+	return err
+}
+
+func (s *LocalStorage) AddPart(pf *model.PartFile, pfc *model.PartFileChunk, r io.Reader) error {
+	pfp := s.getPartFilePath(pf)
+	p := filepath.Join(pfp, strconv.FormatInt(pfc.ChunkIndex, 10))
+	file, err := os.Create(p)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+	_, err = io.Copy(file, r)
+	return err
+}
+
+func (s *LocalStorage) CompletePart(pf *model.PartFile, pfcs []model.PartFileChunk) error {
+	pfp := s.getPartFilePath(pf)
+	pd := s.getParentDir(pf.Idx)
+	if err := os.MkdirAll(pd, 0755); err != nil {
+		log.Error("create parent directory error", zap.String("path", pd), zap.Error(err))
+		return err
+	}
+	fp := filepath.Join(pd, pf.Idx)
+	file, err := os.Create(fp)
+	if err != nil {
+		log.Error("create file error", zap.String("path", fp), zap.Error(err))
+		return err
+	}
+	defer file.Close()
+
+	for _, pfc := range pfcs {
+		p := filepath.Join(pfp, strconv.FormatInt(pfc.ChunkIndex, 10))
+		f, err := os.Open(p)
+		if err != nil {
+			log.Error("open file error", zap.String("path", p), zap.Error(err))
+			return err
+		}
+		defer f.Close()
+		_, err = io.Copy(file, f)
+		if err != nil {
+			log.Error("copy file error", zap.String("from", p), zap.String("to", fp), zap.Error(err))
+			return err
+		}
+	}
+	return nil
+}
+
+func (s *LocalStorage) getPartFilePath(pf *model.PartFile) string {
+	return filepath.Join(s.RootPath, "__parts__", pf.Idx+"_"+pf.Name)
 }

@@ -68,3 +68,15 @@ func (s *minioStorage) Delete(f *model.File) error {
 	log.Info("minio object deleted", zap.String("bucket", s.cfg.Bucket), zap.String("object", f.Idx))
 	return nil
 }
+
+func (s *minioStorage) InitPart(pf *model.PartFile) error {
+	return nil
+}
+
+func (s *minioStorage) AddPart(pf *model.PartFile, pfc *model.PartFileChunk, r io.Reader) error {
+	return nil
+}
+
+func (s *minioStorage) CompletePart(pf *model.PartFile, pfcs []model.PartFileChunk) error {
+	return nil
+}

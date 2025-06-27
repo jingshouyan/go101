@@ -13,6 +13,7 @@ import (
 	"net/http"
 	"net/url"
 	"path"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -25,17 +26,21 @@ const (
 	md5HeaderKey = "X-File-MD5"
 )
 
-type Storage interface {
+type StorageSystem interface {
 	Save(r io.Reader, f *model.File) error
 	Load(f *model.File) (io.ReadSeekCloser, int64, error)
 	Delete(f *model.File) error
+
+	InitPart(pf *model.PartFile) error
+	AddPart(pf *model.PartFile, pfc *model.PartFileChunk, r io.Reader) error
+	CompletePart(pf *model.PartFile, pfcs []model.PartFileChunk) error
 }
 
 var log = zap.L()
 
-var storage Storage = newStorage()
+var ss StorageSystem = newStorageSystem()
 
-func newStorage() Storage {
+func newStorageSystem() StorageSystem {
 	driver := config.Conf.Storage.Driver
 	switch driver {
 	case "minio":
@@ -78,7 +83,7 @@ func Upload(c *gin.Context) {
 			response.OK(c, f2)
 			return
 		} else if err != gorm.ErrRecordNotFound {
-			response.CommonError(c, http.StatusInternalServerError, err.Error())
+			response.ServerError(c, err)
 			return
 		}
 	}
@@ -102,7 +107,7 @@ func Upload(c *gin.Context) {
 	defer fr.Close()
 	hasher := newHasher()
 
-	err = storage.Save(io.TeeReader(fr, hasher), f2)
+	err = ss.Save(io.TeeReader(fr, hasher), f2)
 	if err != nil {
 		response.CommonError(c, http.StatusBadRequest, err.Error())
 		return
@@ -131,9 +136,9 @@ func Download(c *gin.Context) {
 		response.CommonError(c, http.StatusNotFound, err.Error())
 		return
 	}
-	rsc, fileSize, err := storage.Load(&f)
+	rsc, fileSize, err := ss.Load(&f)
 	if err != nil {
-		response.CommonError(c, http.StatusInternalServerError, err.Error())
+		response.ServerError(c, err)
 		return
 	}
 	defer rsc.Close()
@@ -196,17 +201,17 @@ func Delete(c *gin.Context) {
 	}
 	err = model.DeleteFile(id)
 	if err != nil {
-		response.CommonError(c, http.StatusInternalServerError, err.Error())
+		response.ServerError(c, err)
 		return
 	}
 	count, err := model.CountFilesByIdx(f.Idx)
 	if err != nil {
-		response.CommonError(c, http.StatusInternalServerError, err.Error())
+		response.ServerError(c, err)
 		return
 	}
 	if count == 0 {
 		// 当前文件是最后一个文件，删除文件
-		err = storage.Delete(&f)
+		err = ss.Delete(&f)
 		if err != nil {
 			log.Error("delete file error", zap.String("id", id), zap.Error(err))
 		}
@@ -263,7 +268,7 @@ func UploadInit(c *gin.Context) {
 		return
 	}
 	if err != gorm.ErrRecordNotFound {
-		response.CommonError(c, http.StatusInternalServerError, err.Error())
+		response.ServerError(c, err)
 		return
 	}
 	pf := &model.PartFile{
@@ -275,11 +280,15 @@ func UploadInit(c *gin.Context) {
 		Status:   UploadStateInit,
 	}
 
-	// TODO: storage 初始化分片
+	err = ss.InitPart(pf)
+	if err != nil {
+		response.ServerError(c, err)
+		return
+	}
 
 	err = model.AddPartFile(pf)
 	if err != nil {
-		response.CommonError(c, http.StatusInternalServerError, err.Error())
+		response.ServerError(c, err)
 		return
 	}
 	rsp := UploadInitRsp{
@@ -307,43 +316,84 @@ func UploadPart(c *gin.Context) {
 		response.CommonError(c, http.StatusBadRequest, err.Error())
 		return
 	}
-	p, err := model.GetPartFileChunkByIndex(req.PartFileID, req.ChunkIndex)
+	pfc, err := model.GetPartFileChunkByIndex(req.PartFileID, req.ChunkIndex)
 	if err != nil && err != gorm.ErrRecordNotFound {
-		response.CommonError(c, http.StatusInternalServerError, err.Error())
+		response.ServerError(c, err)
 		return
 	}
 
-	if err == nil && (p.MD5 == req.MD5 && p.Size == fh.Size) {
+	if err == nil && (pfc.MD5 == req.MD5 && pfc.Size == fh.Size) {
 		// 分片已存在，直接返回
 		response.OK(c, nil)
 		return
 	}
-	// TODO： storage 保存分片，校验md5
+	pf, err := model.GetPartFileById(req.PartFileID)
+	if err == gorm.ErrRecordNotFound {
+		// 分片文件不存在
+		response.BizError(c, response.ErrorNotExist, "part file not found")
+		return
+	}
+	if err != nil {
+		response.ServerError(c, err)
+		return
+	}
+
+	if pf.Status == UploadStateComplete {
+		response.BizError(c, response.UploadComplete, "part file already completed")
+		return
+	}
+
+	if req.ChunkIndex < 0 || req.ChunkIndex >= pf.PartSize {
+		response.BizError(c, response.ErrorIllegalArgument, "chunk index out of range")
+		return
+	}
+
+	hasher := newHasher()
+	fr, err := fh.Open()
+	if err != nil {
+		response.ServerError(c, err)
+		return
+	}
+	defer fr.Close()
 
 	if err == gorm.ErrRecordNotFound {
 		// 未找到记录
-		p2 := &model.PartFileChunk{
+		pfc = model.PartFileChunk{
 			PartFileID: req.PartFileID,
 			ChunkIndex: req.ChunkIndex,
 			Size:       fh.Size,
 			MD5:        req.MD5,
 			Idx:        util.GenStringId(),
 		}
-		err = model.AddPartFileChunk(p2)
-		if err != nil {
-			response.CommonError(c, http.StatusInternalServerError, err.Error())
-			return
-		}
+
 	} else {
 		// 更新已存在的分片
-		p.Size = fh.Size
-		p.MD5 = req.MD5
-		p.Idx = util.GenStringId()
-		err = model.UpdatePartFileChunk(&p)
-		if err != nil {
-			response.CommonError(c, http.StatusInternalServerError, err.Error())
-			return
-		}
+		pfc.Size = fh.Size
+		pfc.MD5 = req.MD5
+		pfc.Idx = util.GenStringId()
+
+	}
+
+	err = ss.AddPart(&pf, &pfc, io.TeeReader(fr, hasher))
+	if err != nil {
+		response.ServerError(c, err)
+		return
+	}
+	md5Server := hex.EncodeToString(hasher.Sum(nil))
+	if md5Server != req.MD5 {
+		log.Warn("md5 mismatch", zap.String("client", req.MD5), zap.String("server", md5Server))
+		response.BizError(c, response.MD5Mismatch, "md5 mismatch")
+		return
+	}
+
+	if pfc.ID == "" {
+		err = model.AddPartFileChunk(&pfc)
+	} else {
+		err = model.UpdatePartFileChunk(&pfc)
+	}
+	if err != nil {
+		response.ServerError(c, err)
+		return
 	}
 
 	response.OK(c, nil)
@@ -366,14 +416,14 @@ func UploadComplete(c *gin.Context) {
 		return
 	}
 	if err != nil {
-		response.CommonError(c, http.StatusInternalServerError, err.Error())
+		response.ServerError(c, err)
 		return
 	}
 	if pf.Status == UploadStateComplete {
 		// 分片上传已完成，直接返回文件信息
 		f, err := model.GetFileById(pf.ID)
 		if err != nil {
-			response.CommonError(c, http.StatusInternalServerError, err.Error())
+			response.ServerError(c, err)
 			return
 		}
 		response.OK(c, f)
@@ -381,14 +431,26 @@ func UploadComplete(c *gin.Context) {
 	}
 	pfcs, err := model.GetPartFileChunksByPartFileID(req.PartFileID)
 	if err != nil {
-		response.CommonError(c, http.StatusInternalServerError, err.Error())
+		response.ServerError(c, err)
 		return
 	}
 	if len(pfcs) != int(pf.PartSize) {
 		response.BizError(c, response.UploadUncomplete, "not all parts uploaded")
 		return
 	}
-	// TODO: storage 合并分片
+	// pfcs 按照 ChunkIndex 排序
+	sort.Slice(pfcs, func(i, j int) bool {
+		return pfcs[i].ChunkIndex < pfcs[j].ChunkIndex
+	})
+
+	// storage 合并分片
+	err = ss.CompletePart(&pf, pfcs)
+	if err != nil {
+		response.ServerError(c, err)
+		return
+	}
+
+	// 更新分片文件状态为完成
 	pf.Status = UploadStateComplete
 	model.UpdatePartFile(&pf)
 	f := &model.File{
@@ -405,7 +467,7 @@ func UploadComplete(c *gin.Context) {
 	}
 	err = model.AddFile(f)
 	if err != nil {
-		response.CommonError(c, http.StatusInternalServerError, err.Error())
+		response.ServerError(c, err)
 		return
 	}
 	response.OK(c, f)

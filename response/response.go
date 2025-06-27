@@ -9,13 +9,16 @@ import (
 const (
 	Success = 200
 
-	ErrorExist    = 10001
-	ErrorNotExist = 10002
+	ErrorExist           = 10001
+	ErrorNotExist        = 10002
+	ErrorIllegalArgument = 10003
 
 	PasswordWrong   = 20001
 	AccountDisabled = 20002
 
 	UploadUncomplete = 30001
+	UploadComplete   = 30002
+	MD5Mismatch      = 30003
 )
 
 func OK(c *gin.Context, data ...interface{}) {
@@ -57,4 +60,11 @@ func CommonError(c *gin.Context, code int, data ...interface{}) {
 			"code": code,
 		})
 	}
+}
+
+func ServerError(c *gin.Context, err error) {
+	c.JSON(http.StatusInternalServerError, gin.H{
+		"code":  http.StatusInternalServerError,
+		"error": err.Error(),
+	})
 }
